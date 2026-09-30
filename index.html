@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Birthday Adventure</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body data-state="identity-check">
+<section id="boot"><div class="box">
+<h1>SYSTEM CHECK</h1><p>身分確認中，檢測</p>
+<p id="bar">[░░░░░░░░░░] 0%</p><pre id="log"></pre>
+<h2 id="ok" hidden>PLAYER VERIFIED.<br>WELCOME.</h2>
+<button id="startBtn" class="btn">▶ START</button></div></section>
+
+<div id="hud"><div id="quest"></div><div id="mem"></div><button id="restart" class="btn">↻</button></div>
+
+<div id="wrap"><div id="stage">
+<div id="window" class="obj" data-id="window"><div class="sky"></div><div id="curL" class="cur"></div><div id="curR" class="cur"></div></div>
+<div id="beam"></div>
+<div id="clock" class="obj" data-id="clock"><i id="hh"></i><i id="mm"></i><i id="ss"></i></div>
+<div id="frame" class="obj" data-id="frame"><b></b></div>
+<div id="wardrobe" class="obj" data-id="wardrobe"><span id="shirt"></span><u class="dl"></u><u class="dr"></u></div>
+<div id="rug" class="obj" data-id="rug"></div>
+<div id="bed" class="obj" data-id="bed"><span class="pillow"></span><span id="blanket"></span></div>
+<div id="desk"></div>
+<div id="drawer" class="obj" data-id="drawer"></div>
+<div id="diary" class="obj" data-id="diary"></div>
+<div id="speaker" class="obj" data-id="speaker"><i class="led"></i></div>
+<div id="plush" class="obj" data-id="plush"><i class="ear"></i><i class="ear r"></i></div>
+<div id="cake" class="obj" data-id="cake" hidden><i class="cn"><b></b></i><i class="cn"><b></b></i><i class="cn"><b></b></i></div>
+<div id="dark"></div>
+<button id="openBtn" class="btn" hidden>[CLICK TO OPEN]</button>
+</div></div>
+
+<div id="hint"></div><div id="toast"></div>
+<div id="dlg" hidden><div class="box"><h2 id="dt"></h2><div id="db"></div><div id="dbtn"></div></div></div>
+<script src="script.js"></script></body></html>
+EOF
+
+cat > style.css <<'EOF'
+*{box-sizing:border-box;margin:0}
+[hidden]{display:none!important}
+body{background:#0b0a14;color:#fff;font-family:'Press Start 2P','Noto Sans TC',monospace;overflow:hidden;height:100vh}
+#wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#stage{position:relative;flex:none;width:640px;height:360px;overflow:hidden;image-rendering:pixelated;
+background:linear-gradient(#ecd0a8 0 240px,#8a5a34 240px 246px,#b4713f 246px)}
+.btn{font:10px 'Press Start 2P',monospace;background:#ffe066;color:#222;border:3px solid #222;box-shadow:3px 3px #000;padding:8px 12px;cursor:pointer}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px #000}
+.box{background:#1b1433;border:4px solid #fff;box-shadow:6px 6px #000;padding:16px;width:520px;max-width:92vw}
+#boot{position:fixed;inset:0;z-index:50;background:#05050f;display:flex;align-items:center;justify-content:center;text-align:center}
+#boot.gone{display:none}#boot p,#boot pre,#boot h2{margin:12px 0;font-size:11px;line-height:1.8;text-align:left}
+#boot h2{color:#7dff9b;text-align:center}#boot h1{font-size:14px}
+.obj{position:absolute;cursor:pointer;transition:transform .3s,filter .3s}
+.obj:hover{outline:3px dashed #ffe066;outline-offset:3px;filter:brightness(1.2)}
+.locked{filter:grayscale(.6) brightness(.85)}
+#diary::after,#frame::after,.bright .obj::after{content:'✦';position:absolute;top:-10px;right:-6px;color:#ffe066;font-size:12px;opacity:0;animation:sp 5s infinite steps(5)}
+#frame::after{animation-delay:2s}.bright .obj::after{animation-duration:2s}
+@keyframes sp{0%,80%{opacity:0}85%,95%{opacity:1}}
+#window{left:260px;top:30px;width:120px;height:100px;border:6px solid #8b5a3c;overflow:hidden;background:#6fb7e9}
+.sky{position:absolute;inset:0;background:linear-gradient(#7cc4f0,#d8f0ff);animation:sky 6s infinite steps(6)}
+@keyframes sky{50%{filter:brightness(1.12)}}
+.cur{position:absolute;top:0;width:52%;height:100%;background:repeating-linear-gradient(90deg,#b5485c 0 6px,#963a4c 6px 12px);transition:transform 3s ease-in-out;animation:sway 4s infinite steps(4)}
+#curL{left:0}#curR{right:0}@keyframes sway{50%{top:2px}}
+.open #curL{transform:translateX(-88%)}.open #curR{transform:translateX(88%)}
+#beam{position:absolute;left:250px;top:130px;width:140px;height:230px;background:linear-gradient(rgba(255,240,150,.4),transparent);clip-path:polygon(0 0,100% 0,135% 100%,-35% 100%);opacity:0;transition:opacity 3s;pointer-events:none}
+.open #beam{opacity:1}
+#dark{position:absolute;inset:0;background:rgba(5,5,25,.88);pointer-events:none;transition:opacity 3s;z-index:9}
+.open #dark{opacity:0}.dim #dark{opacity:.65}
+#clock{left:420px;top:34px;width:40px;height:40px;background:#fff;border:4px solid #4a2b16}
+#clock i{position:absolute;left:calc(50% - 1px);bottom:50%;width:2px;background:#000;transform-origin:bottom}
+#hh{height:10px}#mm{height:14px}#ss{height:15px;background:#d22!important;width:1px!important}
+#frame{left:150px;top:44px;width:64px;height:80px;background:#fff;border:6px solid #6b3f22;padding:4px}
+#frame b{display:block;height:100%;background:linear-gradient(#9cd,#7b9)}
+#wardrobe{left:14px;top:96px;width:100px;height:170px;background:#2a1a10;border:5px solid #4a2b16;overflow:hidden}
+#shirt{position:absolute;left:30px;top:18px;width:40px;height:60px;background:#111;border-top:8px solid #333}
+#wardrobe u{position:absolute;top:0;width:50%;height:100%;background:#9b633a;text-decoration:none;transition:transform 1.8s ease-in-out;border:3px solid #6e4424}
+.dl{left:0;transform-origin:left}.dr{right:0;transform-origin:right}
+#wardrobe.open .dl{transform:scaleX(.12)}#wardrobe.open .dr{transform:scaleX(.12)}
+#bed{left:130px;top:196px;width:180px;height:96px;background:#e9dcc4;border:5px solid #5a3a22}
+.pillow{position:absolute;left:8px;top:8px;width:44px;height:26px;background:#fff;border:3px solid #ccd}
+#blanket{position:absolute;left:58px;right:0;top:0;bottom:0;transition:transform 1s;background:radial-gradient(#fff 3px,transparent 4px) 0 0/18px 18px,#6aa5d6}
+#bed.lift #blanket{transform:translateY(-8px)}
+#rug{left:210px;top:300px;width:240px;height:48px;background:repeating-linear-gradient(90deg,#c05a5a 0 12px,#e8a0a0 12px 24px);border:4px solid #8a3a3a}
+#desk{position:absolute;left:440px;top:180px;width:170px;height:62px;background:#8b5a3c;border-top:12px solid #b87a4b}
+#drawer{left:452px;top:204px;width:146px;height:30px;background:#6b4229;border:3px solid #3d2516}
+#drawer.open{transform:translateY(12px)}
+#diary{left:470px;top:158px;width:42px;height:22px;background:#fff;border:3px solid #bbb;border-left:8px solid #999}
+#speaker{left:560px;top:138px;width:44px;height:42px;background:#333;border:3px solid #111}
+.led{position:absolute;right:4px;top:4px;width:8px;height:8px;background:#a22;animation:blink 2s infinite steps(2)}
+#speaker.on .led{background:#3f6;animation-duration:.6s}@keyframes blink{50%{opacity:.3}}
+#plush{left:420px;top:268px;width:34px;height:30px;background:#a0703c;border:3px solid #6b4520;animation:bob 3s infinite steps(3)}
+#plush::before{content:'';position:absolute;left:6px;top:8px;width:4px;height:4px;background:#000;box-shadow:12px 0 #000}
+.ear{position:absolute;top:-10px;left:0;width:10px;height:12px;background:#7a4f28;animation:ear 5s infinite steps(2)}.ear.r{left:auto;right:0}
+@keyframes bob{50%{margin-top:-2px}}@keyframes ear{0%,90%{height:12px}95%{height:8px}}
+#plush.shake{animation:shake .6s steps(6)}@keyframes shake{25%{margin-left:-4px}75%{margin-left:4px}}
+#cake{z-index:5;left:330px;top:262px;width:56px;height:40px;background:#f7c5d5;border:4px solid #c2587a;animation:bob 2s infinite steps(2)}
+.cn{position:absolute;top:-18px;width:4px;height:14px;background:#fff}.cn:nth-child(1){left:10px}.cn:nth-child(2){left:22px}.cn:nth-child(3){left:34px}
+.cn b{position:absolute;top:-8px;left:-2px;width:8px;height:8px;background:#ffb300;animation:blink .4s infinite steps(2)}
+#cake.out .cn b{display:none}
+#openBtn{position:absolute;left:260px;top:140px;z-index:10;animation:blink 1.2s infinite steps(2)}
+#hud{position:fixed;inset:6px 6px auto 6px;display:none;justify-content:space-between;align-items:flex-start;gap:6px;z-index:20;font-size:8px;line-height:1.7;pointer-events:none}
+.play #hud{display:flex}#hud div{background:#000c;border:3px solid #fff;padding:6px;white-space:pre}#hud .btn{pointer-events:auto;padding:4px 8px}
+#hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#000d;border:3px solid #fff;padding:8px 12px;font:12px 'Noto Sans TC';z-index:30;display:none}
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1b1433;border:4px solid #ffe066;padding:10px 14px;font:11px 'Press Start 2P','Noto Sans TC';z-index:40;opacity:0;transition:opacity .4s;pointer-events:none;text-align:center;max-width:90vw;line-height:1.7}
+#toast.show{opacity:1}
+#dlg{position:fixed;inset:0;background:#0008;z-index:60;display:flex;align-items:center;justify-content:center}
+#dt{font-size:12px;color:#ffe066;margin-bottom:12px;line-height:1.6}
+#db{font:15px/1.9 'Noto Sans TC',sans-serif;white-space:pre-wrap;max-height:60vh;overflow:auto}
+#db.flip{animation:flip .5s steps(5)}@keyframes flip{from{opacity:0;transform:translateX(12px)}}
+#dbtn{margin-top:14px;display:flex;gap:10px;justify-content:flex-end}
+.photo{width:100%;max-height:45vh;object-fit:contain;animation:fade 3s;margin-bottom:8px;display:block}@keyframes fade{from{opacity:0}}
+.ph{border:3px dashed #888;padding:30px;text-align:center;font-size:11px;margin-bottom:8px}
+EOF
