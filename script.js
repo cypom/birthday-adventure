@@ -113,3 +113,35 @@ function boot(){let p=0;const L={30:'> Detecting player...',60:'> Loading room..
   if(p>=100){clearInterval(t);$('#ok').hidden=false;setTimeout(showPw,1200)}},70)}
 try{fit();addEventListener('resize',fit);tick();setInterval(tick,1000);hud()}catch(e){console.error(e)}
 try{boot()}catch(e){console.error(e);try{showPw()}catch(_){}}
+
+
+cd birthday-adventure
+
+python3 - <<'PY'
+import re
+p='script.js'
+s=open(p,encoding='utf-8').read()
+
+old="""$('#pwBtn').onclick=checkPw;$('#pwIn').onkeydown=e=>{if(e.key==='Enter')checkPw()};"""
+new="""(function(){if(!$('#pw')){const d=document.createElement('div');d.id='pw';d.hidden=true;d.innerHTML='<p>ENTER PASSCODE</p><input id="pwIn" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----"><button id="pwBtn" class="btn">▶ OK</button><p id="pwMsg"></p>';($('#boot .box')||document.body).append(d)}})();
+{const _b=$('#pwBtn'),_i=$('#pwIn');if(_b)_b.onclick=checkPw;if(_i)_i.onkeydown=e=>{if(e.key==='Enter')checkPw()}}"""
+if old not in s:
+    print("!! 找不到要修補的那一行，請把 script.js 內容貼給我"); raise SystemExit
+s=s.replace(old,new)
+
+s=s.replace("function showPw(){setState('password');","function showPw(){const sb=$('#startBtn');if(sb)sb.hidden=true;setState('password');")
+s=s.replace("$('#openBtn').onclick=openCurtain;$('#restart').onclick=()=>location.reload();",
+"{const ob=$('#openBtn'),rs=$('#restart');if(ob)ob.onclick=openCurtain;if(rs)rs.onclick=()=>location.reload()}")
+s+="\nsetTimeout(()=>{if(S.state==='identity-check'){try{showPw()}catch(e){console.error(e)}}},9000);\n"
+open(p,'w',encoding='utf-8').write(s)
+
+h=open('index.html',encoding='utf-8').read()
+h=re.sub(r'script\.js[^"]*"','script.js?v=3"',h)
+h=re.sub(r'style\.css[^"]*"','style.css?v=3"',h)
+open('index.html','w',encoding='utf-8').write(h)
+print("OK 已修補")
+PY
+
+git add .
+git commit -m "Fix stuck boot screen, add guards"
+git push
