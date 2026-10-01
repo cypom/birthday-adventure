@@ -1,11 +1,11 @@
 'use strict';
 /* ===== 在這裡改文字、照片、音樂、密碼 ===== */
 const CFG={
-bgm:'slo-mo.mp3',            /* 全站背景音樂：Gemini - Slo-mo */
-music:'i-love-you-3000.mp3', /* 音響音樂：Stephanie Poetri - I Love You 3000 */
+bgm:'slo-mo.mp3',
+music:'i-love-you-3000.mp3',
 photo:'photo.jpg',
-pass:'0530',                 /* 開場密碼 */
-diaryCode:'1005',            /* 日記本密碼（時鐘 10:05） */
+pass:'0530',
+diaryCode:'1005',
 bedNote:'毯子底下有一張小紙條：\n\n「時鐘停住的那一刻，\n就是日記本的密碼。」',
 diary:['今天是個特別的日子。\n這本日記，是為你準備的第一個秘密。','翻到這一頁的你，\n一定發現這個房間有點不一樣了。','繼續探索吧，\n每一件物品都藏著一段回憶。'],
 frame:'這張照片……是那天最自然的笑容。（請換成你們的回憶）',
@@ -22,9 +22,8 @@ const IDS=['diary','frame','shirt','drawer','plush','speaker'];
 const cnt=()=>IDS.filter(i=>S.got[i]).length;
 const setState=s=>{S.state=s;document.body.dataset.state=s};
 const txt=t=>{const d=document.createElement('div');d.textContent=t;return d};
-function toast(t){const e=$('#toast');e.textContent=t;e.className='show';clearTimeout(toast.t);toast.t=setTimeout(()=>e.className='',2400)}
+function toast(t){const e=$('#toast');if(!e)return;e.textContent=t;e.className='show';clearTimeout(toast.t);toast.t=setTimeout(()=>e.className='',2400)}
 
-/* ---- 音樂 ---- */
 function mk(src,loop){try{const a=new Audio(src);a.loop=loop;a.preload='auto';return a}catch(e){return null}}
 function playA(a){try{const r=a&&a.play();r&&r.catch&&r.catch(()=>{})}catch(e){}}
 function startBgm(){if(S.mode!=='bgm')return;if(!A.bgm)A.bgm=mk(CFG.bgm,true);playA(A.bgm)}
@@ -87,25 +86,28 @@ function openCurtain(){if(S.open)return;S.open=true;$('#stage').classList.add('o
 function toCurtain(){if(S.state!=='password'&&S.state!=='identity-check')return;$('#boot').classList.add('gone');setState('curtain');$('#openBtn').hidden=false}
 
 /* ---- 開場密碼 ---- */
-function showPw(){setState('password');$('#pw').hidden=false;try{$('#pwIn').focus()}catch(e){}}
+function ensurePw(){if($('#pw'))return;const d=document.createElement('div');d.id='pw';d.hidden=true;
+ d.innerHTML='<p>ENTER PASSCODE</p><input id="pwIn" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----"><button id="pwBtn" class="btn">▶ OK</button><p id="pwMsg"></p>';
+ ($('#boot .box')||document.body).append(d);bindPw()}
+function bindPw(){const b=$('#pwBtn'),i=$('#pwIn');if(b)b.onclick=checkPw;if(i)i.onkeydown=e=>{if(e.key==='Enter')checkPw()}}
+function showPw(){ensurePw();const sb=$('#startBtn');if(sb)sb.hidden=true;setState('password');$('#pw').hidden=false;try{$('#pwIn').focus()}catch(e){}}
 function checkPw(){const v=$('#pwIn').value.trim();
  if(v===CFG.pass){startBgm();toCurtain()}
  else{$('#pwMsg').textContent='ACCESS DENIED';const b=$('#boot .box');b.classList.remove('bad');void b.offsetWidth;b.classList.add('bad');$('#pwIn').value=''}}
-$('#pwBtn').onclick=checkPw;$('#pwIn').onkeydown=e=>{if(e.key==='Enter')checkPw()};
+bindPw();
 
 $('#stage').addEventListener('click',e=>{const o=e.target.closest('.obj');if(!o)return;const id=o.dataset.id;
  try{if(S.state==='curtain'||S.state==='identity-check'||S.state==='password'){if(id==='window'&&S.state==='curtain')openCurtain();return}
   if(!$('#dlg').hidden||S.state==='final'&&id!=='cake')return;
   if(locked(id)){toast(LOCK[id][1]);return}
   H[id]&&H[id]()}catch(err){console.error(err);toast('…')}});
-$('#openBtn').onclick=openCurtain;$('#restart').onclick=()=>location.reload();
+{const ob=$('#openBtn'),rs=$('#restart');if(ob)ob.onclick=openCurtain;if(rs)rs.onclick=()=>location.reload()}
 const HINT={diary:'▶ 日記本上了鎖……',frame:'▶ 這張照片……',wardrobe:'▶ 裡面好像藏著什麼。',drawer:'▶ 抽屜……',plush:'▶ 咦，它在動？',speaker:'▶ 播放音樂',window:'▶ [OPEN] 拉開窗簾',cake:'▶ 吹熄蠟燭',clock:'▶ 看看時間',bed:'▶ 毯子底下好像有東西'};
 $$('.obj').forEach(o=>o.dataset.hint=HINT[o.dataset.id]||'▶ 查看');
 $('#stage').addEventListener('mouseover',e=>{const o=e.target.closest('.obj'),h=$('#hint');if(o){h.textContent=o.dataset.hint;h.style.display='block';o.classList.toggle('locked',S.open&&locked(o.dataset.id))}else h.style.display='none'});
 $('#stage').addEventListener('mouseleave',()=>$('#hint').style.display='none');
 
 function fit(){$('#stage').style.transform=`scale(${Math.min(innerWidth/640,innerHeight/360)})`}
-/* 時鐘：時針分針固定在 10:05，秒針照常走動 */
 function tick(){const d=new Date();$('#ss').style.transform=`rotate(${d.getSeconds()*6}deg)`;$('#mm').style.transform='rotate(30deg)';$('#hh').style.transform='rotate(302.5deg)'}
 function boot(){let p=0;const L={30:'> Detecting player...',60:'> Loading room...',90:'> Preparing birthday quest...'};
  const t=setInterval(()=>{p+=2;const n=Math.floor(p/10);$('#bar').textContent=`[${'█'.repeat(n)}${'░'.repeat(10-n)}] ${p}%`;
@@ -113,35 +115,11 @@ function boot(){let p=0;const L={30:'> Detecting player...',60:'> Loading room..
   if(p>=100){clearInterval(t);$('#ok').hidden=false;setTimeout(showPw,1200)}},70)}
 try{fit();addEventListener('resize',fit);tick();setInterval(tick,1000);hud()}catch(e){console.error(e)}
 try{boot()}catch(e){console.error(e);try{showPw()}catch(_){}}
+setTimeout(()=>{if(S.state==='identity-check'){try{showPw()}catch(e){console.error(e)}}},9000);
+EOF
 
-
-cd birthday-adventure
-
-python3 - <<'PY'
-import re
-p='script.js'
-s=open(p,encoding='utf-8').read()
-
-old="""$('#pwBtn').onclick=checkPw;$('#pwIn').onkeydown=e=>{if(e.key==='Enter')checkPw()};"""
-new="""(function(){if(!$('#pw')){const d=document.createElement('div');d.id='pw';d.hidden=true;d.innerHTML='<p>ENTER PASSCODE</p><input id="pwIn" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----"><button id="pwBtn" class="btn">▶ OK</button><p id="pwMsg"></p>';($('#boot .box')||document.body).append(d)}})();
-{const _b=$('#pwBtn'),_i=$('#pwIn');if(_b)_b.onclick=checkPw;if(_i)_i.onkeydown=e=>{if(e.key==='Enter')checkPw()}}"""
-if old not in s:
-    print("!! 找不到要修補的那一行，請把 script.js 內容貼給我"); raise SystemExit
-s=s.replace(old,new)
-
-s=s.replace("function showPw(){setState('password');","function showPw(){const sb=$('#startBtn');if(sb)sb.hidden=true;setState('password');")
-s=s.replace("$('#openBtn').onclick=openCurtain;$('#restart').onclick=()=>location.reload();",
-"{const ob=$('#openBtn'),rs=$('#restart');if(ob)ob.onclick=openCurtain;if(rs)rs.onclick=()=>location.reload()}")
-s+="\nsetTimeout(()=>{if(S.state==='identity-check'){try{showPw()}catch(e){console.error(e)}}},9000);\n"
-open(p,'w',encoding='utf-8').write(s)
-
-h=open('index.html',encoding='utf-8').read()
-h=re.sub(r'script\.js[^"]*"','script.js?v=3"',h)
-h=re.sub(r'style\.css[^"]*"','style.css?v=3"',h)
-open('index.html','w',encoding='utf-8').write(h)
-print("OK 已修補")
-PY
+sed -i.bak 's/script\.js[^"]*"/script.js?v=4"/; s/style\.css[^"]*"/style.css?v=4"/' index.html && rm -f index.html.bak
 
 git add .
-git commit -m "Fix stuck boot screen, add guards"
+git commit -m "Clean script.js"
 git push
