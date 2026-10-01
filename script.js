@@ -22,11 +22,11 @@ const IDS=['diary','frame','shirt','drawer','plush','speaker'];
 const cnt=()=>IDS.filter(i=>S.got[i]).length;
 const setState=s=>{S.state=s;document.body.dataset.state=s};
 const txt=t=>{const d=document.createElement('div');d.textContent=t;return d};
-function toast(t){const e=$('#toast');if(!e)return;e.textContent=t;e.className='show';clearTimeout(toast.t);toast.t=setTimeout(()=>e.className='',2400)}
+function toast(t){const e=$('#toast');e.textContent=t;e.className='show';clearTimeout(toast.t);toast.t=setTimeout(()=>e.className='',2400)}
 
 function mk(src,loop){try{const a=new Audio(src);a.loop=loop;a.preload='auto';return a}catch(e){return null}}
 function playA(a){try{const r=a&&a.play();r&&r.catch&&r.catch(()=>{})}catch(e){}}
-function startBgm(){if(S.mode!=='bgm')return;if(!A.bgm)A.bgm=mk(CFG.bgm,true);playA(A.bgm)}
+function startBgm(){if(S.mode!=='bgm')return;if(!A.bgm)A.bgm=mk(CFG.bgm,true);if(A.bgm&&A.bgm.paused)playA(A.bgm)}
 document.addEventListener('pointerdown',startBgm);
 
 function dlg(title,node,btns){$('#dt').textContent=title;const b=$('#db');b.className='';void b.offsetWidth;b.className='flip';b.innerHTML='';b.append(node);
@@ -65,7 +65,7 @@ plush(){const p=$('#plush');p.classList.add('shake');setTimeout(()=>p.classList.
  setTimeout(()=>dlg('你找到我了！',txt(CFG.plush)),500)},
 speaker(){const s=$('#speaker');
  try{if(!A.love)A.love=mk(CFG.music,true);
-  if(S.mode==='bgm'){S.mode='love';A.bgm&&A.bgm.pause()}
+  if(S.mode==='bgm'){S.mode='love';if(A.bgm){A.bgm.pause();A.bgm.currentTime=0}}
   if(S.playing){A.love&&A.love.pause();S.playing=false;s.classList.remove('on');toast('MUSIC OFF')}
   else{playA(A.love);S.playing=true;s.classList.add('on');toast('NOW PLAYING\n'+CFG.speaker)}}
  catch(e){toast('NOW PLAYING\n'+CFG.speaker)}
@@ -85,23 +85,18 @@ function openCurtain(){if(S.open)return;S.open=true;$('#stage').classList.add('o
  setState('room');hud();setTimeout(()=>toast('QUEST STARTED\nFind all the birthday memories.'),1800)}
 function toCurtain(){if(S.state!=='password'&&S.state!=='identity-check')return;$('#boot').classList.add('gone');setState('curtain');$('#openBtn').hidden=false}
 
-/* ---- 開場密碼 ---- */
-function ensurePw(){if($('#pw'))return;const d=document.createElement('div');d.id='pw';d.hidden=true;
- d.innerHTML='<p>ENTER PASSCODE</p><input id="pwIn" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----"><button id="pwBtn" class="btn">▶ OK</button><p id="pwMsg"></p>';
- ($('#boot .box')||document.body).append(d);bindPw()}
-function bindPw(){const b=$('#pwBtn'),i=$('#pwIn');if(b)b.onclick=checkPw;if(i)i.onkeydown=e=>{if(e.key==='Enter')checkPw()}}
-function showPw(){ensurePw();const sb=$('#startBtn');if(sb)sb.hidden=true;setState('password');$('#pw').hidden=false;try{$('#pwIn').focus()}catch(e){}}
 function checkPw(){const v=$('#pwIn').value.trim();
  if(v===CFG.pass){startBgm();toCurtain()}
  else{$('#pwMsg').textContent='ACCESS DENIED';const b=$('#boot .box');b.classList.remove('bad');void b.offsetWidth;b.classList.add('bad');$('#pwIn').value=''}}
-bindPw();
+function showPw(){if(S.state!=='identity-check')return;setState('password');$('#pw').hidden=false;try{$('#pwIn').focus()}catch(e){}}
+$('#pwBtn').onclick=checkPw;$('#pwIn').onkeydown=e=>{if(e.key==='Enter')checkPw()};
 
 $('#stage').addEventListener('click',e=>{const o=e.target.closest('.obj');if(!o)return;const id=o.dataset.id;
  try{if(S.state==='curtain'||S.state==='identity-check'||S.state==='password'){if(id==='window'&&S.state==='curtain')openCurtain();return}
   if(!$('#dlg').hidden||S.state==='final'&&id!=='cake')return;
   if(locked(id)){toast(LOCK[id][1]);return}
   H[id]&&H[id]()}catch(err){console.error(err);toast('…')}});
-{const ob=$('#openBtn'),rs=$('#restart');if(ob)ob.onclick=openCurtain;if(rs)rs.onclick=()=>location.reload()}
+$('#openBtn').onclick=openCurtain;$('#restart').onclick=()=>location.reload();
 const HINT={diary:'▶ 日記本上了鎖……',frame:'▶ 這張照片……',wardrobe:'▶ 裡面好像藏著什麼。',drawer:'▶ 抽屜……',plush:'▶ 咦，它在動？',speaker:'▶ 播放音樂',window:'▶ [OPEN] 拉開窗簾',cake:'▶ 吹熄蠟燭',clock:'▶ 看看時間',bed:'▶ 毯子底下好像有東西'};
 $$('.obj').forEach(o=>o.dataset.hint=HINT[o.dataset.id]||'▶ 查看');
 $('#stage').addEventListener('mouseover',e=>{const o=e.target.closest('.obj'),h=$('#hint');if(o){h.textContent=o.dataset.hint;h.style.display='block';o.classList.toggle('locked',S.open&&locked(o.dataset.id))}else h.style.display='none'});
@@ -114,12 +109,6 @@ function boot(){let p=0;const L={30:'> Detecting player...',60:'> Loading room..
   if(L[p])$('#log').textContent+=L[p]+'\n';
   if(p>=100){clearInterval(t);$('#ok').hidden=false;setTimeout(showPw,1200)}},70)}
 try{fit();addEventListener('resize',fit);tick();setInterval(tick,1000);hud()}catch(e){console.error(e)}
-try{boot()}catch(e){console.error(e);try{showPw()}catch(_){}}
-setTimeout(()=>{if(S.state==='identity-check'){try{showPw()}catch(e){console.error(e)}}},9000);
-EOF
-
-sed -i.bak 's/script\.js[^"]*"/script.js?v=4"/; s/style\.css[^"]*"/style.css?v=4"/' index.html && rm -f index.html.bak
-
-git add .
-git commit -m "Clean script.js"
-git push
+try{boot()}catch(e){console.error(e);showPw()}
+setTimeout(showPw,9000);
+</script></body></html>
